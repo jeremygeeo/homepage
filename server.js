@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require('express');
 const path = require('path');
 const fs = require('fs').promises;
@@ -5,8 +6,9 @@ const { convertDocsToHtml } = require('./googleDocsToHtml.js');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const PAGES_DIRECTORY = path.join(__dirname, 'pages');
-const TEMPLATES_DIRECTORY = path.join(__dirname, 'templates');
+const LISTEN_IP = process.env.LISTEN_IP || '127.0.0.1';
+const PAGES_DIRECTORY = process.env.PAGES_DIRECTORY || path.join(__dirname, 'pages');
+const TEMPLATES_DIRECTORY = process.env.TEMPLATES_DIRECTORY || path.join(__dirname, 'templates');
 
 // Middleware to serve static files from the 'documents' directory if needed (e.g., for images)
 app.use('/documents', express.static(PAGES_DIRECTORY));
@@ -75,8 +77,8 @@ app.get('/', (req, res) => {
 */
 });
 
-
-app.listen(PORT, () => {
-    console.log(`Server is running on http://localhost:${PORT}`);
+app.listen(PORT, LISTEN_IP, () => {
+    console.log(`Server is running on http://${LISTEN_IP}:${PORT}`);
     console.log(`Serving pages from: ${PAGES_DIRECTORY}`);
+    console.log(`Using templates from: ${TEMPLATES_DIRECTORY}`);
 });
