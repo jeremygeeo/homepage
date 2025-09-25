@@ -1,0 +1,11 @@
+{
+  "name": "homepage",
+  "version": "0.0.1",
+  "description": "CNP Home Page Generator",
+  "main": "server.js",
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.19.2"
+  }
+}
