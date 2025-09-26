@@ -4,8 +4,8 @@ const { URL } = require('url');
 const { EventEmitter } = require('events');
 const { getDocuments, getGoogleDocAsJson, getFileDetails } = require('./googleDrive.js');
 
-const PAGES_DIRECTORY = process.env.PAGES_DIRECTORY || join(__dirname, '../pages');
 const CACHE_DIRECTORY = process.env.CACHE_DIRECTORY || join(__dirname, '../cache');
+const DOCS_DIRECTORY = process.env.DOCS_DIRECTORY || join(CACHE_DIRECTORY, 'docs');
 const INDEX_PATH = join(CACHE_DIRECTORY, 'index.json');
 const SYNC_INTERVAL_SECONDS = parseInt(process.env.GOOGLE_DRIVE_SYNC_INTERVAL_SECONDS, 10) || 60;
 
@@ -16,7 +16,7 @@ let syncInProgress = false;
  * Ensures that the necessary cache and pages directories exist.
  */
 async function ensureDirectories() {
-    await fs.mkdir(PAGES_DIRECTORY, { recursive: true });
+    await fs.mkdir(DOCS_DIRECTORY, { recursive: true });
     await fs.mkdir(CACHE_DIRECTORY, { recursive: true });
 }
 
@@ -152,7 +152,7 @@ async function syncFiles() {
 
             const localItem = localIndex[fullPath];
 
-            const localPath = join(PAGES_DIRECTORY, `${downloadId}.json`);
+            const localPath = join(DOCS_DIRECTORY, `${downloadId}.json`);
             const isMissingLocally = !(await fileExists(localPath));
 
             // Download if file is new or if modifiedTime has changed.
@@ -218,13 +218,13 @@ async function pruneStaleFiles(requiredFileIds) {
     console.log('Checking for stale files to remove...');
     let prunedCount = 0;
     try {
-        const localFiles = await fs.readdir(PAGES_DIRECTORY);
+        const localFiles = await fs.readdir(DOCS_DIRECTORY);
         for (const localFile of localFiles) {
             if (!localFile.endsWith('.json')) continue;
 
             const fileId = localFile.replace('.json', '');
             if (!requiredFileIds.has(fileId)) {
-                const localPath = join(PAGES_DIRECTORY, localFile);
+                const localPath = join(DOCS_DIRECTORY, localFile);
                 try {
                     await fs.unlink(localPath);
                     console.log(`Pruned stale file: ${localPath} (ID: ${fileId})`);

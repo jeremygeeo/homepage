@@ -10,9 +10,9 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const LISTEN_IP = process.env.LISTEN_IP || '127.0.0.1';
 const BASE_URL = process.env.BASE_URL || `http://${LISTEN_IP}:${PORT}`;
-const PAGES_DIRECTORY = process.env.PAGES_DIRECTORY || path.join(__dirname, '../pages');
 const TEMPLATES_DIRECTORY = process.env.TEMPLATES_DIRECTORY || path.join(__dirname, '../templates');
 const CACHE_DIRECTORY = process.env.CACHE_DIRECTORY || path.join(__dirname, '../cache');
+const DOCS_DIRECTORY = process.env.DOCS_DIRECTORY || path.join(CACHE_DIRECTORY, 'docs');
 const INDEX_PATH = path.join(CACHE_DIRECTORY, 'index.json');
 
 let pathIndex = {};
@@ -118,7 +118,7 @@ async function renderDirectory(req, res, currentPath) {
  * Renders a single document page.
  */
 async function renderFile(req, res, item) {
-    const docPath = path.join(PAGES_DIRECTORY, `${item.id}.json`);
+    const docPath = path.join(DOCS_DIRECTORY, `${item.id}.json`);
 
     try {
         await fs.access(docPath);
@@ -178,6 +178,6 @@ app.listen(PORT, LISTEN_IP, async () => {
     await startSyncService();
 
     console.log(`Server is running on http://${LISTEN_IP}:${PORT}`);
-    console.log(`Serving pages from: ${PAGES_DIRECTORY}`);
+    console.log(`Serving docs from: ${DOCS_DIRECTORY}`);
     console.log(`Using templates from: ${TEMPLATES_DIRECTORY}`);
 });
