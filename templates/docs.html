@@ -4,85 +4,23 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document Viewer</title>
-    <style>
-        body {
-            /* Google Docs-style serif font for body text */
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-            line-height: 1.5;
-            color: #000000;
-            /* Light gray background, similar to Google Docs */
-            background-color: #f1f3f4;
-            margin: 0;
-            padding: 20px;
-        }
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-            /* Padding to simulate document margins */
-            padding: 50px 60px;
-            background-color: #ffffff;
-            border: 1px solid #dee2e6;
-            border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-        }
-        /* Use a sans-serif font for headings, like in Google Docs */
-        h1, h2, h3, h4, h5, h6 {
-            font-family: Arial, Helvetica, sans-serif;
-            margin-top: 1.5em;
-            margin-bottom: 0.5em;
-            color: #000000;
-            font-weight: 700;
-        }
-        h1 { font-size: 2em; }
-        h2 { font-size: 1.5em; }
-        h3 { font-size: 1.25em; }
-        h4 { font-size: 1em; font-weight: bold; }
-        h5 { font-size: .875em; font-weight: bold; }
-        h6 { font-size: .8em; font-weight: bold; color: #666; }
-
-        p, ul, table {
-            margin-bottom: 1em;
-        }
-
-        a {
-            color: #007bff;
-            text-decoration: none;
-        }
-        a:hover {
-            text-decoration: underline;
-        }
-        ul {
-            padding-left: 2em;
-        }
-        li {
-            margin-bottom: 0.5em;
-        }
-        img {
-          margin-top: 1em;
-          margin-bottom: 1em;
-          border-radius: 4px;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 1.5em;
-            margin-bottom: 1.5em;
-        }
-        th, td {
-            border: 1px solid #dee2e6;
-            padding: 12px;
-            text-align: left;
-        }
-        th {
-            background-color: #f8f9fa;
-            font-weight: bold;
-            color: #495057;
-        }
-    </style>
+    <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
+
+    <nav class="navbar">
+        <a href="/" class="nav-brand">Home</a>
+        <div class="hamburger">&#9776;</div>
+        <ul class="nav-links" id="nav-links"></ul>
+    </nav>
+
     <div class="container">
-        <!-- CONTENT -->
+        <div class="main-content">
+            <!-- CONTENT -->
+        </div>
     </div>
+
+    <script src="/js/nav.js"></script>
+
 </body>
 </html>

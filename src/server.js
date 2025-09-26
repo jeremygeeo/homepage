@@ -12,8 +12,12 @@ const LISTEN_IP = process.env.LISTEN_IP || '127.0.0.1';
 const BASE_URL = process.env.BASE_URL || `http://${LISTEN_IP}:${PORT}`;
 const TEMPLATES_DIRECTORY = process.env.TEMPLATES_DIRECTORY || path.join(__dirname, '../templates');
 const CACHE_DIRECTORY = process.env.CACHE_DIRECTORY || path.join(__dirname, '../cache');
+const PUBLIC_DIRECTORY = process.env.PUBLIC_DIRECTORY || path.join(__dirname, '../public');
 const DOCS_DIRECTORY = process.env.DOCS_DIRECTORY || path.join(CACHE_DIRECTORY, 'docs');
 const INDEX_PATH = path.join(CACHE_DIRECTORY, 'index.json');
+
+// Serve static files from the 'public' directory
+app.use(express.static(PUBLIC_DIRECTORY));
 
 let pathIndex = {};
 
@@ -36,6 +40,64 @@ syncEmitter.on('syncComplete', () => {
     console.log('Sync complete event received. Reloading path index...');
     loadPathIndex();
 });
+
+/**
+ * Builds a hierarchical navigation tree from the flat pathIndex.
+ * @param {object} pathIndex - The flat index of site paths.
+ * @returns {Array<object>} A hierarchical array of navigation nodes.
+ */
+function buildNavTree(pathIndex) {
+    const nodes = {};
+    const tree = [];
+
+    // Create nodes for all paths
+    for (const [fullPath, item] of Object.entries(pathIndex)) {
+        if (fullPath === '/') continue; // Skip the root folder itself
+
+        nodes[fullPath] = {
+            name: item.name,
+            path: item.mimeType === 'application/vnd.google-apps.folder' ? `${fullPath}/` : fullPath,
+            children: []
+        };
+    }
+
+    // Build the hierarchy
+    for (const fullPath of Object.keys(nodes)) {
+        const parentDir = path.dirname(fullPath);
+        if (parentDir === '/') {
+            tree.push(nodes[fullPath]);
+        } else if (nodes[parentDir]) {
+            nodes[parentDir].children.push(nodes[fullPath]);
+        }
+    }
+
+    // Helper to sort children recursively
+    const sortChildren = (node) => {
+        // Sort by folders first, then by name
+        node.children.sort((a, b) => {
+            const aIsFolder = a.children.length > 0;
+            const bIsFolder = b.children.length > 0;
+            if (aIsFolder !== bIsFolder) {
+                return aIsFolder ? -1 : 1;
+            }
+            return a.name.localeCompare(b.name);
+        });
+        node.children.forEach(sortChildren);
+    };
+
+    // Sort the root level and all children
+    tree.sort((a, b) => {
+        const aIsFolder = a.children.length > 0;
+        const bIsFolder = b.children.length > 0;
+        if (aIsFolder !== bIsFolder) {
+            return aIsFolder ? -1 : 1;
+        }
+        return a.name.localeCompare(b.name);
+    });
+    tree.forEach(sortChildren);
+
+    return tree;
+}
 
 /**
  * Renders a directory listing page.
@@ -139,6 +201,12 @@ async function renderFile(req, res, item) {
     }
 }
 
+// API endpoint for navigation
+app.get('/api/nav', (req, res) => {
+    const navTree = buildNavTree(pathIndex);
+    res.json(navTree);
+});
+
 // Universal route to handle all requests
 app.get('*', async (req, res) => {
     let reqPath = path.normalize(req.path);
@@ -179,5 +247,6 @@ app.listen(PORT, LISTEN_IP, async () => {
 
     console.log(`Server is running on http://${LISTEN_IP}:${PORT}`);
     console.log(`Serving docs from: ${DOCS_DIRECTORY}`);
+    console.log(`Serving static assets from: ${PUBLIC_DIRECTORY}`);
     console.log(`Using templates from: ${TEMPLATES_DIRECTORY}`);
 });

@@ -1,0 +1,177 @@
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    line-height: 1.5;
+    color: #000000;
+    margin: 0;
+    /* Light gray background, similar to Google Docs */
+    background-color: #f4f4f4;
+}
+
+/* Navbar Styles */
+.navbar {
+    background-color: #333;
+    color: white;
+    padding: 0 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    height: 60px;
+}
+.navbar a {
+    color: white;
+    text-decoration: none;
+}
+.nav-brand {
+    font-size: 1.5em;
+    font-weight: bold;
+}
+.nav-links {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    height: 100%;
+}
+.nav-item {
+    position: relative;
+}
+.nav-item > a {
+    display: flex;
+    align-items: center;
+    padding: 0 15px;
+    height: 100%;
+}
+.nav-item:hover {
+    background-color: #555;
+}
+.dropdown {
+    display: none;
+    position: absolute;
+    background-color: #333;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    min-width: 200px;
+    z-index: 1;
+    box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+}
+.nav-item:hover > .dropdown {
+    display: block;
+}
+.dropdown .nav-item {
+    width: 100%;
+    height: auto;
+}
+.dropdown .nav-item a {
+    padding: 12px 16px;
+}
+.hamburger {
+    display: none;
+    cursor: pointer;
+    font-size: 24px;
+}
+
+/* Document Content Styles */
+.container {
+    max-width: 800px;
+    margin: 20px auto;
+    /* Padding to simulate document margins */
+    padding: 50px 60px;
+    background-color: #ffffff;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+}
+
+/* Use a sans-serif font for headings, like in Google Docs */
+h1, h2, h3, h4, h5, h6 {
+    font-family: Arial, Helvetica, sans-serif;
+    margin-top: 1.5em;
+    margin-bottom: 0.5em;
+    color: #000000;
+    font-weight: 700;
+}
+h1 { font-size: 2em; }
+h2 { font-size: 1.5em; }
+h3 { font-size: 1.25em; }
+h4 { font-size: 1em; font-weight: bold; }
+h5 { font-size: .875em; font-weight: bold; }
+h6 { font-size: .8em; font-weight: bold; color: #666; }
+
+p, ul, table {
+    margin-bottom: 1em;
+}
+a {
+    color: #007bff;
+    text-decoration: none;
+}
+a:hover {
+    text-decoration: underline;
+}
+ul {
+    padding-left: 2em;
+}
+li {
+    margin-bottom: 0.5em;
+}
+img {
+  margin-top: 1em;
+  margin-bottom: 1em;
+  border-radius: 4px;
+  max-width: 100%;
+  height: auto;
+}
+table {
+    border-collapse: collapse;
+    margin-top: 1.5em;
+    margin-bottom: 1.5em;
+    width: 100%;
+}
+th, td {
+    border: 1px solid #dee2e6;
+    padding: 12px;
+    text-align: left;
+}
+th {
+    background-color: #f8f9fa;
+    font-weight: bold;
+    color: #495057;
+}
+
+/* Mobile styles */
+@media (max-width: 768px) {
+    .navbar {
+        position: relative;
+    }
+    .nav-links {
+        display: none;
+        flex-direction: column;
+        width: 100%;
+        position: absolute;
+        top: 60px; /* Height of the navbar */
+        left: 0;
+        background-color: #333;
+        height: auto;
+    }
+    .nav-links.active {
+        display: flex;
+    }
+    .hamburger {
+        display: block;
+    }
+    .dropdown {
+        position: static;
+        display: none;
+        background-color: #444;
+        box-shadow: none;
+        border-top: 1px solid #555;
+    }
+    /* On mobile, we can use JS to toggle dropdowns on click */
+    .nav-item.open > .dropdown {
+        display: block;
+    }
+    .container {
+        margin: 10px;
+        padding: 20px;
+    }
+}
