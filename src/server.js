@@ -136,7 +136,7 @@ async function renderDirectory(req, res, currentPath) {
 
             tableRowsHtml += `
                 <tr>
-                    <td><span class="file-icon">[Up]</span></td>
+                    <td><img src="/icons/up.svg" alt="Up" class="file-icon"></td>
                     <td><a href="${parentLink}">(Back to ${parentName})</a></td>
                     <td></td>
                 </tr>`;
@@ -149,17 +149,17 @@ async function renderDirectory(req, res, currentPath) {
             directories.forEach(([dirPath, dirItem]) => {
                 tableRowsHtml += `
                     <tr>
-                        <td><span class="file-icon">[Folder]</span></td>
+                        <td><img src="/icons/folder.svg" alt="Folder" class="file-icon"></td>
                         <td><a href="${dirPath}/">${dirItem.name}/</a></td>
                         <td>${formatTimeAgo(dirItem.modifiedTime)}</td>
                     </tr>`;
             });
             // Render files
             files.forEach(([filePath, fileItem]) => {
-                const fileType = fileItem.mimeType.includes('spreadsheet') ? '[Sheet]' : '[Doc]';
+                const icon = fileItem.mimeType.includes('spreadsheet') ? 'sheet.svg' : 'doc.svg';
                 tableRowsHtml += `
                     <tr>
-                        <td><span class="file-icon">${fileType}</span></td>
+                        <td><img src="/icons/${icon}" alt="File" class="file-icon"></td>
                         <td><a href="${filePath}">${fileItem.name}</a></td>
                         <td>${formatTimeAgo(fileItem.modifiedTime)}</td>
                     </tr>`;

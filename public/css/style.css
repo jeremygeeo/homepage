@@ -41,9 +41,30 @@ body {
     padding: 0 15px;
     height: 100%;
 }
-.nav-item:hover {
-    background-color: #555;
+
+/* Make the link a flex container to position the arrow */
+.nav-item.has-dropdown > a {
+    justify-content: space-between;
 }
+
+/* Style for folder items to make them look more substantial */
+.nav-item.has-dropdown > a {
+    font-weight: 500;
+}
+
+/* Add a subtle arrow for dropdowns */
+.dropdown-arrow {
+    border: solid white;
+    border-width: 0 2px 2px 0;
+    display: inline-block;
+    padding: 3px;
+    margin-left: 8px;
+    cursor: pointer;
+    flex-shrink: 0; /* Prevent arrow from shrinking */
+    transform: rotate(45deg);
+    transition: transform 0.2s;
+}
+
 .dropdown {
     display: none;
     position: absolute;
@@ -55,8 +76,13 @@ body {
     z-index: 1;
     box-shadow: 0 8px 16px rgba(0,0,0,0.2);
 }
-.nav-item:hover > .dropdown {
+
+/* Show dropdown when the 'open' class is added by JS */
+.nav-item.open > .dropdown {
     display: block;
+}
+.nav-item.open > a > .dropdown-arrow {
+    transform: rotate(-135deg); /* Point arrow up */
 }
 .dropdown .nav-item {
     width: 100%;
@@ -64,6 +90,16 @@ body {
 }
 .dropdown .nav-item a {
     padding: 12px 16px;
+}
+
+/* Differentiate files from folders in dropdowns */
+.dropdown .nav-item:not(.has-dropdown) a {
+    color: #ddd;
+    font-weight: normal;
+}
+
+.nav-item:hover, .nav-item.open {
+    background-color: #555;
 }
 .hamburger {
     display: none;
@@ -138,6 +174,16 @@ th {
     color: #495057;
 }
 
+/* Styles for file browser table */
+tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+.file-icon {
+    width: 20px;
+    height: 20px;
+    vertical-align: middle;
+}
+
 /* Mobile styles */
 @media (max-width: 768px) {
     .navbar {
@@ -165,10 +211,6 @@ th {
         background-color: #444;
         box-shadow: none;
         border-top: 1px solid #555;
-    }
-    /* On mobile, we can use JS to toggle dropdowns on click */
-    .nav-item.open > .dropdown {
-        display: block;
     }
     .container {
         margin: 10px;
