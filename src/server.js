@@ -4,99 +4,178 @@ const path = require('path');
 const fs = require('fs').promises;
 const { convertDocsToHtml } = require('./googleDocsToHtml.js');
 const { formatTimeAgo } = require('./utils.js');
-const syncService = require('./sync.js');
+const { start: startSyncService, syncEmitter } = require('./sync.js');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 const LISTEN_IP = process.env.LISTEN_IP || '127.0.0.1';
+const BASE_URL = process.env.BASE_URL || `http://${LISTEN_IP}:${PORT}`;
 const PAGES_DIRECTORY = process.env.PAGES_DIRECTORY || path.join(__dirname, '../pages');
 const TEMPLATES_DIRECTORY = process.env.TEMPLATES_DIRECTORY || path.join(__dirname, '../templates');
 const CACHE_DIRECTORY = process.env.CACHE_DIRECTORY || path.join(__dirname, '../cache');
+const INDEX_PATH = path.join(CACHE_DIRECTORY, 'index.json');
 
-// Main route to render pages from local JSON files
-app.get('/:filename', async (req, res) => {
-    const filename = `${req.params.filename}.json`;
-    console.log(`Request for document: ${filename}`);
-    const docPath = path.join(PAGES_DIRECTORY, filename);
+let pathIndex = {};
 
+/**
+ * Loads the path index from the cache file.
+ */
+async function loadPathIndex() {
     try {
-        // 1. Check if the file exists. fs.access throws an error if it doesn't.
-        await fs.access(docPath);
-
-        // 2. Read the JSON document and the HTML template
-        const [docJsonRaw, templateHtml] = await Promise.all([
-            fs.readFile(docPath, 'utf8'),
-            fs.readFile(path.join(TEMPLATES_DIRECTORY, 'docs.html'), 'utf8')
-        ]);
-
-        // 3. Parse the JSON and convert it to HTML
-        const docJson = JSON.parse(docJsonRaw);
-        const contentHtml = convertDocsToHtml(docJson);
-        
-        // 4. Inject the content into the template
-        const finalHtml = templateHtml.replace('<!-- CONTENT -->', contentHtml);
-        
-        // 5. Send the final page
-        res.setHeader('Content-Type', 'text/html');
-        res.send(finalHtml);
-
+        const indexJson = await fs.readFile(INDEX_PATH, 'utf8');
+        pathIndex = JSON.parse(indexJson);
+        console.log('Path index loaded into memory.');
     } catch (error) {
-        if (error.code === 'ENOENT') {
-            // File not found
-            console.warn(`404 - File not found at path: ${docPath}`);
-            res.status(404).send(`
-                <h1>404 - Not Found</h1>
-                <p>The document "${req.params.filename}" could not be found.</p>
-            `);
-        } else if (error instanceof SyntaxError) {
-            // JSON parsing error
-            console.error(`Error parsing JSON file: ${filename}`, error);
-            res.status(500).send(`<h1>500 - Server Error</h1><p>The file "${filename}" is not a valid JSON file.</p>`);
-        } else {
-            // Other server errors
-            console.error(`An unexpected error occurred for "${filename}":`, error);
-            res.status(500).send('<h1>500 - Internal Server Error</h1>');
-        }
+        console.error(`Could not load or parse ${INDEX_PATH}. Waiting for sync.`, error);
+        pathIndex = {};
     }
+}
+
+// Listen for the sync completion event to reload the index
+syncEmitter.on('syncComplete', () => {
+    console.log('Sync complete event received. Reloading path index...');
+    loadPathIndex();
 });
 
-app.get('/', async (req, res) => {
+/**
+ * Renders a directory listing page.
+ */
+async function renderDirectory(req, res, currentPath) {
     try {
-        const [indexJson, templateHtml] = await Promise.all([
-            fs.readFile(path.join(CACHE_DIRECTORY, 'index.json'), 'utf8'),
-            fs.readFile(path.join(TEMPLATES_DIRECTORY, 'index.html'), 'utf8')
-        ]);
+        const templateHtml = await fs.readFile(path.join(TEMPLATES_DIRECTORY, 'index.html'), 'utf8');
+        
+        const children = Object.entries(pathIndex).filter(([childPath, item]) => {
+            // Find items that are direct children of the current path
+            const parentDir = path.dirname(childPath);
+            if (currentPath === '/') {
+                // For the root, the parent directory of a child must also be the root.
+                return parentDir === '/';
+            }
+            return parentDir === currentPath;
+        });
 
-        const documents = new Map(JSON.parse(indexJson));
+        // Separate directories and files
+        const directories = children.filter(([, item]) => item.mimeType === 'application/vnd.google-apps.folder');
+        const files = children.filter(([, item]) => item.mimeType !== 'application/vnd.google-apps.folder');
+
+        // Sort directories and files alphabetically
+        directories.sort(([pathA], [pathB]) => pathA.localeCompare(pathB));
+        files.sort(([pathA], [pathB]) => pathA.localeCompare(pathB));
+
         let tableRowsHtml = '';
 
-        if (documents.size > 0) {
-            for (const [name, doc] of documents.entries()) {
-                const fileType = doc.mimeType.includes('spreadsheet') ? '[Sheet]' : '[Doc]';
-                const timeAgo = formatTimeAgo(doc.modifiedTime);
+        // Add a "back to parent" link if not in the root directory
+        if (currentPath !== '/') {
+            const parentPath = path.dirname(currentPath);
+            // The link should always end with a slash for a directory
+            const parentLink = parentPath === '/' ? '/' : `${parentPath}/`;
+            // Get the parent's name. If the parent is the root, use a generic name like "Home".
+            const parentName = parentPath === '/' ? 'Home' : (pathIndex[parentPath]?.name || '..');
+
+            tableRowsHtml += `
+                <tr>
+                    <td><span class="file-icon">[Up]</span></td>
+                    <td><a href="${parentLink}">(Back to ${parentName})</a></td>
+                    <td></td>
+                </tr>`;
+        }
+
+        if (children.length === 0) {
+            tableRowsHtml += '<tr><td colspan="3">This directory is empty.</td></tr>';
+        } else {
+            // Render directories first
+            directories.forEach(([dirPath, dirItem]) => {
+                tableRowsHtml += `
+                    <tr>
+                        <td><span class="file-icon">[Folder]</span></td>
+                        <td><a href="${dirPath}/">${dirItem.name}/</a></td>
+                        <td>${formatTimeAgo(dirItem.modifiedTime)}</td>
+                    </tr>`;
+            });
+            // Render files
+            files.forEach(([filePath, fileItem]) => {
+                const fileType = fileItem.mimeType.includes('spreadsheet') ? '[Sheet]' : '[Doc]';
                 tableRowsHtml += `
                     <tr>
                         <td><span class="file-icon">${fileType}</span></td>
-                        <td><a href="/${name}">${name}</a></td>
-                        <td>${timeAgo}</td>
+                        <td><a href="${filePath}">${fileItem.name}</a></td>
+                        <td>${formatTimeAgo(fileItem.modifiedTime)}</td>
                     </tr>`;
-            }
-        } else {
-            tableRowsHtml = '<tr><td colspan="3">No documents found in the configured Google Drive folder.</td></tr>';
+            });
         }
 
         const finalHtml = templateHtml.replace('<!-- FILE_LIST -->', tableRowsHtml);
         res.setHeader('Content-Type', 'text/html');
         res.send(finalHtml);
+
     } catch (error) {
-        console.error(`Could not read or parse ${path.join(CACHE_DIRECTORY, 'index.json')}`, error);
-        res.status(500).send('<h1>Error</h1><p>Could not load document list. Please wait for the next sync or check server logs.</p>');
+        console.error(`Error rendering directory for ${currentPath}:`, error);
+        res.status(500).send('<h1>500 - Internal Server Error</h1>');
     }
+}
+
+/**
+ * Renders a single document page.
+ */
+async function renderFile(req, res, item) {
+    const docPath = path.join(PAGES_DIRECTORY, `${item.id}.json`);
+
+    try {
+        await fs.access(docPath);
+        const [docJsonRaw, templateHtml] = await Promise.all([
+            fs.readFile(docPath, 'utf8'),
+            fs.readFile(path.join(TEMPLATES_DIRECTORY, 'docs.html'), 'utf8')
+        ]);
+
+        const docJson = JSON.parse(docJsonRaw);
+        const contentHtml = convertDocsToHtml(docJson);
+        const finalHtml = templateHtml.replace('<!-- CONTENT -->', contentHtml);
+
+        res.setHeader('Content-Type', 'text/html');
+        res.send(finalHtml);
+    } catch (error) {
+        console.error(`Error rendering file ${item.name} (ID: ${item.id}):`, error);
+        res.status(500).send('<h1>500 - Error Rendering File</h1><p>The file exists in the index but could not be rendered. It may still be syncing.</p>');
+    }
+}
+
+// Universal route to handle all requests
+app.get('*', async (req, res) => {
+    let reqPath = path.normalize(req.path);
+
+    // If root, treat as directory
+    if (reqPath === '/' || reqPath === '/index.html') {
+        return renderDirectory(req, res, '/');
+    }
+
+    // Check if it's a directory request (ends with /)
+    if (reqPath.endsWith('/') && reqPath.length > 1) {
+        const dirPath = reqPath.slice(0, -1); // Remove trailing slash for lookup
+        if (pathIndex[dirPath] && pathIndex[dirPath].mimeType === 'application/vnd.google-apps.folder') {
+            return renderDirectory(req, res, dirPath);
+        }
+    } else { // It's a file request (or a directory request missing a slash)
+        const item = pathIndex[reqPath];
+        if (item && item.mimeType !== 'application/vnd.google-apps.folder') {
+            return renderFile(req, res, item);
+        }
+        // If it wasn't a file, check if it's a directory that needs a redirect
+        if (pathIndex[reqPath] && pathIndex[reqPath].mimeType === 'application/vnd.google-apps.folder') {
+            const newUrl = new URL(req.originalUrl + '/', BASE_URL);
+            return res.redirect(301, newUrl.href);
+        }
+    }
+
+    // If we get here, nothing was found
+    console.warn(`404 - Path not found in index: ${reqPath}`);
+    res.status(404).send(`<h1>404 - Not Found</h1><p>The path "${req.path}" could not be found.</p>`);
 });
 
 app.listen(PORT, LISTEN_IP, async () => {
-    // Start the background sync service
-    syncService.start();
+    // Start the sync service and wait for the *first* sync to complete
+    // before loading the index and starting the server.
+    console.log('Performing initial data sync before starting server...');
+    await startSyncService();
 
     console.log(`Server is running on http://${LISTEN_IP}:${PORT}`);
     console.log(`Serving pages from: ${PAGES_DIRECTORY}`);
