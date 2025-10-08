@@ -51,6 +51,9 @@ async function listFilesRecursive(auth, folderId) {
                 auth,
                 q: `'${currentFolderId}' in parents and trashed = false`,
                 fields: 'nextPageToken, files(id, name, mimeType, modifiedTime, parents, shortcutDetails(targetId))',
+                corpora: 'allDrives',
+                includeItemsFromAllDrives: true,
+                supportsAllDrives: true,
                 pageToken: pageToken,
             });
 
@@ -104,6 +107,7 @@ async function getFileDetails(fileId) {
         auth,
         fileId,
         fields: 'id, name, mimeType, modifiedTime, parents, shortcutDetails(targetId)',
+        supportsAllDrives: true,
     });
     return res.data;
 }
