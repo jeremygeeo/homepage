@@ -50,7 +50,7 @@ async function listFilesRecursive(auth, folderId) {
             const res = await drive.files.list({
                 auth,
                 q: `'${currentFolderId}' in parents and trashed = false`,
-                fields: 'nextPageToken, files(id, name, mimeType, modifiedTime, parents, shortcutDetails(targetId))',
+                fields: 'nextPageToken, files(id, name, mimeType, modifiedTime, parents, shortcutDetails(targetId), lastModifyingUser, webViewLink)',
                 corpora: 'allDrives',
                 includeItemsFromAllDrives: true,
                 supportsAllDrives: true,
@@ -106,7 +106,7 @@ async function getFileDetails(fileId) {
     const res = await drive.files.get({
         auth,
         fileId,
-        fields: 'id, name, mimeType, modifiedTime, parents, shortcutDetails(targetId)',
+        fields: 'id, name, mimeType, modifiedTime, parents, shortcutDetails(targetId), lastModifyingUser, webViewLink',
         supportsAllDrives: true,
     });
     return res.data;

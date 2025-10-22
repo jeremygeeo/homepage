@@ -191,7 +191,23 @@ async function renderFile(req, res, item) {
 
         const docJson = JSON.parse(docJsonRaw);
         const contentHtml = convertDocsToHtml(docJson);
-        const finalHtml = templateHtml.replace('<!-- CONTENT -->', contentHtml);
+
+        // Build header
+        const modifiedDate = new Date(item.modifiedTime).toLocaleString();
+        const modifierName = item.lastModifyingUser?.displayName || 'Unknown User';
+        const docHeaderHtml = `
+            <strong>${modifierName}</strong> on ${modifiedDate}
+        `;
+
+        // Build footer
+        const docFooterHtml = `
+            <a href="${item.webViewLink}" target="_blank" rel="noopener noreferrer"><code>${req.path}</code></a>
+        `;
+
+        const finalHtml = templateHtml
+            .replace('<!-- DOC_HEADER -->', docHeaderHtml)
+            .replace('<!-- CONTENT -->', contentHtml)
+            .replace('<!-- DOC_FOOTER -->', docFooterHtml);
 
         res.setHeader('Content-Type', 'text/html');
         res.send(finalHtml);

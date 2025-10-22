@@ -129,6 +129,8 @@ async function syncFiles() {
                     ...remoteItem, // Start with shortcut's properties (id, name, parents)
                     mimeType: targetItem.mimeType, // Overwrite with target's mimeType
                     modifiedTime: targetItem.modifiedTime, // Overwrite with target's modifiedTime
+                    lastModifyingUser: targetItem.lastModifyingUser, // Overwrite with target's user
+                    webViewLink: targetItem.webViewLink, // Overwrite with target's webViewLink
                 };
                 downloadId = targetItem.id; // We download the target's content
             }
@@ -147,7 +149,9 @@ async function syncFiles() {
                 name: itemToIndex.name, // Use the shortcut's name
                 mimeType: itemToIndex.mimeType, // Use the target's mimeType
                 modifiedTime: itemToIndex.modifiedTime, // Use the target's modifiedTime
-                parent: itemToIndex.parents ? itemToIndex.parents[0] : null
+                parent: itemToIndex.parents ? itemToIndex.parents[0] : null,
+                lastModifyingUser: itemToIndex.lastModifyingUser,
+                webViewLink: itemToIndex.webViewLink,
             };
 
             const localItem = localIndex[fullPath];
