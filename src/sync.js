@@ -2,7 +2,7 @@ const { join, posix, dirname } = require('path');
 const fs = require('fs').promises;
 const { URL } = require('url');
 const { EventEmitter } = require('events');
-const { getDocuments, getGoogleDocAsJson, getFileDetails } = require('./googleDrive.js');
+const { getDocuments, getGoogleDocAsJson, getFileDetails, getGoogleImage } = require('./googleDrive.js');
 
 const CACHE_DIRECTORY = process.env.CACHE_DIRECTORY || join(__dirname, '../cache');
 const DOCS_DIRECTORY = process.env.DOCS_DIRECTORY || join(CACHE_DIRECTORY, 'docs');
@@ -166,6 +166,28 @@ async function syncFiles() {
 
                 if (isTargetDoc) {
                     const docJson = await getGoogleDocAsJson(downloadId);
+
+                    // Process images: find contentUris, download them, and replace with data URIs
+                    if (docJson.inlineObjects) {
+                        for (const objectId in docJson.inlineObjects) {
+                            const inlineObject = docJson.inlineObjects[objectId];
+                            const imageProperties = inlineObject.inlineObjectProperties?.embeddedObject?.imageProperties;
+                            const contentUri = imageProperties?.contentUri;
+
+                            if (contentUri) {
+                                try {
+                                    console.log(`   - Embedding image for doc ${downloadId}...`);
+                                    const imageBuffer = await getGoogleImage(contentUri);
+                                    const base64Image = imageBuffer.toString('base64');
+                                    // The mime type is not provided, so we have to guess or assume. Let's assume JPEG for now.
+                                    // A more robust solution might inspect the buffer for magic numbers.
+                                    imageProperties.contentUri = `data:image/jpeg;base64,${base64Image}`;
+                                } catch (imgError) {
+                                    console.error(`   - Failed to embed image ${contentUri}:`, imgError.message);
+                                }
+                            }
+                        }
+                    }
                     await fs.writeFile(localPath, JSON.stringify(docJson, null, 2));
                 } else if (isTargetSheet) {
                     const placeholder = {

@@ -1,12 +1,23 @@
+const sanitizeHtml = require('sanitize-html');
+
+/**
+ * Sanitizes text content to prevent XSS.
+ * It allows basic tags that we will re-apply, but escapes any raw HTML.
+ * @param {string} text - The text to sanitize.
+ * @returns {string} - The sanitized text.
+ */
+function sanitizeText(text) {
+    // Basic configuration: remove all tags, but keep the content.
+    return sanitizeHtml(text, { allowedTags: [], allowedAttributes: {} });
+}
+
 /**
  * Processes a single element's text run and applies styling.
  * @param {object} textRun - The textRun element from the Google Docs JSON.
  * @returns {string} - The processed HTML string for the text run.
  */
 function processTextRun(textRun) {
-  let textContent = textRun.content.replace(/\n/g, '<br>'); // Replace newlines with <br>
-
-  // Apply basic text styling
+  let textContent = sanitizeText(textRun.content).replace(/\n/g, '<br>');
   if (textRun.textStyle.bold) {
     textContent = `<strong>${textContent}</strong>`;
   }
@@ -19,7 +30,6 @@ function processTextRun(textRun) {
   if (textRun.textStyle.strikethrough) {
     textContent = `<s>${textContent}</s>`;
   }
-
   // Handle links
   if (textRun.textStyle.link?.url) {
     textContent = `<a href="${textRun.textStyle.link.url}" target="_blank" rel="noopener noreferrer">${textContent}</a>`;
@@ -41,12 +51,29 @@ function processImage(element, doc) {
   }
 
   const image = doc.inlineObjects[inlineObjectId].inlineObjectProperties.embeddedObject;
-  const imageUrl = image.imageProperties?.contentUri;
+  const imageProps = image.imageProperties;
+  const imageUrl = imageProps?.contentUri;
   const altText = image.title || 'Embedded image';
   const description = image.description || '';
 
   if (imageUrl) {
-    return `<img src="${imageUrl}" alt="${altText}" title="${description}" style="max-width: 100%; height: auto;" />`;
+    // Start with base responsive styles.
+    let style = 'max-width: 100%; height: auto;';
+
+    // Get dimensions from the doc. The unit is usually 'PT' (points).
+    const width = imageProps?.width;
+    const height = imageProps?.height;
+
+    // If specific dimensions are set in the doc, apply them.
+    if (width && width.magnitude && width.unit) {
+      style += ` width: ${width.magnitude}${width.unit.toLowerCase()};`;
+    }
+    // The explicit height from the doc is often more accurate for aspect ratio.
+    if (height && height.magnitude && height.unit) {
+      style += ` height: ${height.magnitude}${height.unit.toLowerCase()};`;
+    }
+
+    return `<img src="${imageUrl}" alt="${altText}" title="${description}" style="${style}" />`;
   }
   return '[Unsupported image type]';
 }

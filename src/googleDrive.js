@@ -112,8 +112,25 @@ async function getFileDetails(fileId) {
     return res.data;
 }
 
+/**
+ * Fetches an image from a URL using the authorized Google client.
+ * @param {string} imageUrl The URL of the image to fetch.
+ * @returns {Promise<Buffer>} The image content as a Buffer.
+ */
+async function getGoogleImage(imageUrl) {
+    const auth = await authorize();
+    const res = await auth.request({
+        url: imageUrl,
+        responseType: 'arraybuffer' // Important to get binary data
+    });
+    // The data is returned as an ArrayBuffer, convert it to a Node.js Buffer
+    return Buffer.from(res.data);
+}
+
+
 module.exports = {
     getDocuments,
     getGoogleDocAsJson,
     getFileDetails,
+    getGoogleImage,
 };
