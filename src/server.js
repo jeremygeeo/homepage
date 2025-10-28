@@ -5,6 +5,7 @@ const fs = require('fs').promises;
 const { convertDocsToHtml } = require('./googleDocsToHtml.js');
 const { formatTimeAgo } = require('./utils.js');
 const { start: startSyncService, syncEmitter } = require('./sync.js');
+const { getProjectsForPortfolio, getMilestonesForProject } = require('./asana.js');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -104,8 +105,28 @@ function buildNavTree(pathIndex) {
  */
 async function renderDirectory(req, res, currentPath) {
     try {
-        const templateHtml = await fs.readFile(path.join(TEMPLATES_DIRECTORY, 'index.html'), 'utf8');
-        
+        let templatePath;
+
+        // For sub-directories, check for a custom template.
+        if (currentPath !== '/') {
+            // Convert path like '/sales/reports' to 'sales-reports.html'
+            const customTemplateName = currentPath.substring(1).replace(/\//g, '-') + '.html';
+            const customTemplatePath = path.join(TEMPLATES_DIRECTORY, customTemplateName);
+
+            try {
+                await fs.access(customTemplatePath);
+                templatePath = customTemplatePath;
+                console.log(`Using custom template for ${currentPath}: ${customTemplateName}`);
+            } catch (e) {
+                // Custom template doesn't exist, fall back to default.
+                templatePath = path.join(TEMPLATES_DIRECTORY, 'index.html');
+            }
+        } else {
+            // For the root directory, always use the default index.html.
+            templatePath = path.join(TEMPLATES_DIRECTORY, 'index.html');
+        }
+
+        const templateHtml = await fs.readFile(templatePath, 'utf8');
         const children = Object.entries(pathIndex).filter(([childPath, item]) => {
             // Find items that are direct children of the current path
             const parentDir = path.dirname(childPath);
@@ -221,6 +242,27 @@ async function renderFile(req, res, item) {
 app.get('/api/nav', (req, res) => {
     const navTree = buildNavTree(pathIndex);
     res.json(navTree);
+});
+
+// API endpoint for Asana
+app.get('/api/asana/portfolios/:portfolioId/projects', async (req, res) => {
+    const { portfolioId } = req.params;
+    try {
+        const projectsFromApi = await getProjectsForPortfolio(portfolioId);
+
+        // For each project, fetch its milestones and add them to the object.
+        const projects = await Promise.all(projectsFromApi.map(async (project) => {
+            const milestones = await getMilestonesForProject(project.gid);
+            return {
+                ...project,
+                milestones: milestones,
+            };
+        }));
+        res.json(projects);
+    } catch (error) {
+        console.error(`Failed to fetch Asana projects for portfolio ${portfolioId}:`, error);
+        res.status(500).json({ error: 'Failed to fetch data from Asana.' });
+    }
 });
 
 // Universal route to handle all requests

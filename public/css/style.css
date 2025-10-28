@@ -212,6 +212,96 @@ tr:nth-child(even) {
     vertical-align: middle;
 }
 
+/* Asana Project List Styles */
+.asana-project-list {
+    list-style: none;
+    padding: 0;
+}
+.asana-project-item {
+    display: flex;
+    align-items: flex-start; /* Align items to the top */
+    padding: 15px 10px;
+    border-bottom: 1px solid #eee;
+}
+.asana-project-item:last-child {
+    border-bottom: none;
+}
+.project-status-indicator {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    margin: 5px 15px 0 0; /* Add top margin to align with text */
+    flex-shrink: 0;
+    background-color: #ccc; /* Default for 'not_set' */
+}
+.status-on-track { background-color: #2ecc71; } /* Green */
+.status-at-risk { background-color: #f1c40f; } /* Yellow */
+.status-off-track { background-color: #e74c3c; } /* Red */
+.status-on-hold { background-color: #3498db; } /* Blue */
+
+.project-content {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+}
+.project-name {
+    font-weight: 500;
+    font-size: 1.1em;
+    margin-bottom: 4px;
+}
+.project-description {
+    margin: 0 0 10px 0;
+    font-size: 0.9em;
+    color: #666;
+}
+/* Ensure lists within descriptions have proper padding */
+.project-description ul, .project-description ol {
+    padding-left: 20px;
+    margin-top: 5px;
+}
+
+.milestones-container {
+    margin-top: 10px;
+    border-top: 1px solid #f0f0f0;
+    padding-top: 10px;
+}
+.milestone-list {
+    list-style: disc;
+    padding-left: 20px;
+    margin: 0;
+}
+.milestone-item {
+    display: flex;
+    flex-direction: column; /* Stack title and description vertically */
+    font-size: 0.9em;
+    margin-bottom: 10px;
+}
+.milestone-date {
+    font-weight: 600;
+    color: #333;
+    margin-right: 10px;
+    flex-shrink: 0;
+    width: 60px; /* Allocate fixed space for the date */
+}
+.milestone-date.no-date {
+    color: #aaa;
+}
+.milestone-title {
+    display: flex;
+    align-items: baseline;
+}
+.milestone-description {
+    font-size: 0.95em;
+    color: #777;
+    padding-left: 70px; /* Indent to align with milestone title */
+    margin-top: 4px;
+}
+/* Ensure lists within milestone descriptions have proper padding */
+.milestone-description ul, .milestone-description ol {
+    padding-left: 20px;
+    margin-top: 5px;
+}
+
 /* Mobile styles */
 @media (max-width: 768px) {
     .navbar {
