@@ -276,6 +276,29 @@ tr:nth-child(even) {
     font-size: 0.9em;
     margin-bottom: 10px;
 }
+.milestone-status-icon {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    margin-right: 8px;
+    position: relative;
+    flex-shrink: 0;
+}
+/* Create the checkmark using a rotated L-shape with borders */
+.milestone-item.completed .milestone-status-icon::before {
+    content: '';
+    position: absolute;
+    left: 4px;
+    top: 1px;
+    width: 4px;
+    height: 8px;
+    border: solid #2ecc71; /* Green checkmark */
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+}
+.milestone-item.completed .milestone-date {
+    color: #888; /* Dim the date of completed items */
+}
 .milestone-date {
     font-weight: 600;
     color: #333;
@@ -293,7 +316,7 @@ tr:nth-child(even) {
 .milestone-description {
     font-size: 0.95em;
     color: #777;
-    padding-left: 70px; /* Indent to align with milestone title */
+    padding-left: 80px; /* Adjust indent for icon, date, and title */
     margin-top: 4px;
 }
 /* Ensure lists within milestone descriptions have proper padding */

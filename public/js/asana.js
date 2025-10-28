@@ -64,7 +64,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     project.milestones.forEach(milestone => {
                         const milestoneItem = document.createElement('li');
-                        milestoneItem.className = 'milestone-item'; // Remove 'completed' class logic
+                        // Add 'completed' class if the milestone is completed
+                        milestoneItem.className = `milestone-item ${milestone.completed ? 'completed' : ''}`;
 
                         // Format the date, or show a placeholder if it's null
                         let dateHtml = '<span class="milestone-date no-date">No Date</span>';
@@ -75,12 +76,15 @@ document.addEventListener('DOMContentLoaded', () => {
                             dateHtml = `<span class="milestone-date">${formattedDate}</span>`;
                         }
 
+                        // Add a placeholder for the status icon
+                        const statusIconHtml = '<span class="milestone-status-icon"></span>';
+
                         // Use the pre-formatted html_notes for the milestone description.
                         const milestoneDescriptionHtml = milestone.html_notes
                             ? `<div class="milestone-description">${milestone.html_notes}</div>`
                             : '';
 
-                        milestoneItem.innerHTML = `<div class="milestone-title">${dateHtml} <a href="${milestone.permalink_url}" target="_blank" rel="noopener noreferrer">${milestone.name}</a></div>${milestoneDescriptionHtml}`;
+                        milestoneItem.innerHTML = `<div class="milestone-title">${statusIconHtml}${dateHtml} <a href="${milestone.permalink_url}" target="_blank" rel="noopener noreferrer">${milestone.name}</a></div>${milestoneDescriptionHtml}`;
                         milestonesList.appendChild(milestoneItem);
                     });
 
