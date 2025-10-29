@@ -70,10 +70,18 @@ document.addEventListener('DOMContentLoaded', () => {
                         // Format the date, or show a placeholder if it's null
                         let dateHtml = '<span class="milestone-date no-date">No Date</span>';
                         if (milestone.due_on) {
+                            const currentYear = new Date().getFullYear();
                             // Create a date object in UTC to avoid timezone issues
                             const date = new Date(`${milestone.due_on}T00:00:00Z`);
-                            const formattedDate = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' });
-                            dateHtml = `<span class="milestone-date">${formattedDate}</span>`;
+                            const monthDay = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' });
+                            const milestoneYear = date.getUTCFullYear();
+
+                            let yearHtml = '';
+                            // Only show the year if it's a future year
+                            if (milestoneYear > currentYear) {
+                                yearHtml = `<span class="milestone-year">${milestoneYear}</span>`;
+                            }
+                            dateHtml = `<div class="milestone-date"><span class="milestone-month-day">${monthDay}</span>${yearHtml}</div>`;
                         }
 
                         // Add a placeholder for the status icon

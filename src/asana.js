@@ -91,6 +91,15 @@ async function getMilestonesForProject(projectId) {
 
         // Filter the results to only include tasks that are milestones.
         const milestones = response.data.data.filter(task => task.resource_subtype === 'milestone');
+
+        // Sort milestones by due date, oldest first. Null dates go to the end.
+        milestones.sort((a, b) => {
+            if (a.due_on && b.due_on) {
+                return new Date(a.due_on) - new Date(b.due_on);
+            }
+            return a.due_on ? -1 : 1; // Put milestones with dates first
+        });
+
         return milestones;
     } catch (error) {
         console.error(`Error fetching milestones for Asana project ${projectId}:`, error.response?.data || error.message);

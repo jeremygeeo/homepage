@@ -299,15 +299,26 @@ tr:nth-child(even) {
 .milestone-item.completed .milestone-date {
     color: #888; /* Dim the date of completed items */
 }
+/* Container for month/day and year */
 .milestone-date {
-    font-weight: 600;
-    color: #333;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
     margin-right: 10px;
     flex-shrink: 0;
-    width: 60px; /* Allocate fixed space for the date */
+    width: 70px; /* Allocate fixed space for the date */
+}
+.milestone-month-day {
+    font-weight: 600;
+    color: #333;
 }
 .milestone-date.no-date {
     color: #aaa;
+}
+.milestone-year {
+    font-size: 0.9em;
+    color: #888; /* Lighter tone for the year */
+    font-weight: 400;
 }
 .milestone-title {
     display: flex;
